@@ -13,14 +13,14 @@ const bootstrapped = new Promise((resolve) => (bootstrappedResolver = resolve))
 
 // Bootstrap -------------------------------------------------------------------
 initializeSentry()
-;(async function Bootstrap() {
-  await setDefaultSettings()
-  await handlers.fetchVoices()
-  await handlers.fetchUser()
-  await createContextMenus()
-  bootstrappedResolver()
-  await pollForPayment()
-})()
+  ; (async function Bootstrap() {
+    await setDefaultSettings()
+    await handlers.fetchVoices()
+    await handlers.fetchUser()
+    await createContextMenus()
+    bootstrappedResolver()
+    await pollForPayment()
+  })()
 
 // Event listeners -------------------------------------------------------------
 chrome.commands.onCommand.addListener(function (command) {
@@ -195,7 +195,8 @@ export const handlers = {
   download: async function ({ text }) {
     console.log('Downloading audio...', { text })
 
-    const { downloadEncoding: encoding } = await chrome.storage.sync.get()
+    // Always use OGG_OPUS for downloads regardless of settings
+    const encoding = 'OGG_OPUS'
 
     const url = await this.getAudioUri({ text, encoding })
     if (isError(url)) return url
@@ -204,7 +205,7 @@ export const handlers = {
 
     chrome.downloads.download({
       url,
-      filename: `tts-download.${fileExtMap[encoding]}`,
+      filename: `tts-download.${fileExtMap[encoding] || 'ogg'}`,
     })
 
     return Promise.resolve(true)
@@ -516,9 +517,8 @@ async function updateContextMenus() {
   })
 
   chrome.contextMenus.update('download', {
-    title: `Download ${fileExt?.toUpperCase()}${
-      downloadShortcut && ` (${downloadShortcut})`
-    }`,
+    title: `Download ${fileExt?.toUpperCase()}${downloadShortcut && ` (${downloadShortcut})`
+      }`,
   })
 }
 
@@ -550,9 +550,8 @@ async function createContextMenus() {
 
   chrome.contextMenus.create({
     id: 'download',
-    title: `Download ${fileExt?.toUpperCase()}${
-      downloadShortcut && ` (${downloadShortcut})`
-    }`,
+    title: `Download ${fileExt?.toUpperCase()}${downloadShortcut && ` (${downloadShortcut})`
+      }`,
     contexts: ['selection'],
   })
 }
